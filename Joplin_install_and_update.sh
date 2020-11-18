@@ -52,24 +52,27 @@ print "Linux Installer and Updater"
 # Download Joplin
 #-----------------------------------------------------
 
+# Destination of AppImage
+D_BIN="${HOME}/.local/bin/"
+
 # Get the latest version to download
 RELEASE_VERSION=$(wget -qO - "https://api.github.com/repos/laurent22/joplin/releases/latest" | grep -Po '"tag_name": "v\K.*?(?=")')
 
 # Check if it's in the latest version
-if [[ ! -e ~/.joplin/VERSION ]] || [[ $(< ~/.joplin/VERSION) != "$RELEASE_VERSION" ]]; then
+if [[ ! -e "${D_BIN}/Joplin.AppImage.version.txt" ]] || [[ $(< "${D_BIN}/Joplin.AppImage.version.txt") != "$RELEASE_VERSION" ]]; then
 
     print 'Downloading Joplin...'
     # Delete previous version (in future versions joplin.desktop shouldn't exist)
-    rm -f ~/.joplin/*.AppImage ~/.local/share/applications/joplin.desktop ~/.joplin/VERSION
+    rm -f ~/.joplin/*.AppImage ~/.local/share/applications/joplin.desktop "${D_BIN}/Joplin.AppImage.version.txt"
 
     # Creates the folder where the binary will be stored
     mkdir -p ~/.joplin/
 
     # Download the latest version
-    wget -nv --show-progress -O ~/.joplin/Joplin.AppImage https://github.com/laurent22/joplin/releases/download/v$RELEASE_VERSION/Joplin-$RELEASE_VERSION.AppImage
+    wget -nv --show-progress -O "${D_BIN}/Joplin.AppImage" https://github.com/laurent22/joplin/releases/download/v$RELEASE_VERSION/Joplin-$RELEASE_VERSION.AppImage
 
     # Gives execution privileges
-    chmod +x ~/.joplin/Joplin.AppImage
+    chmod +x "${D_BIN}/Joplin.AppImage"
 
     print "${COLOR_GREEN}OK${COLOR_RESET}"
 
@@ -99,7 +102,7 @@ if [[ ! -e ~/.joplin/VERSION ]] || [[ $(< ~/.joplin/VERSION) != "$RELEASE_VERSIO
        : "${TMPDIR:=/tmp}"
        # This command extracts to squashfs-root by default and can't be changed...
        # So we run it in the tmp directory and clean up after ourselves
-       (cd $TMPDIR && ~/.joplin/Joplin.AppImage --appimage-extract joplin.desktop &> /dev/null)
+       (cd $TMPDIR && "${D_BIN}/Joplin.AppImage" --appimage-extract joplin.desktop &> /dev/null)
        APPIMAGE_VERSION=$(grep "^X-AppImage-Version=" $TMPDIR/squashfs-root/joplin.desktop | head -n 1 | cut -d "=" -f 2)
        rm -rf $TMPDIR/squashfs-root
        # Only delete the desktop file if it will be replaced
@@ -107,7 +110,7 @@ if [[ ! -e ~/.joplin/VERSION ]] || [[ $(< ~/.joplin/VERSION) != "$RELEASE_VERSIO
 
        # On some systems this directory doesn't exist by default
        mkdir -p ~/.local/share/applications
-       echo -e "[Desktop Entry]\nEncoding=UTF-8\nName=Joplin\nComment=Joplin for Desktop\nExec=/home/$USER/.joplin/Joplin.AppImage\nIcon=joplin\nStartupWMClass=Joplin\nType=Application\nCategories=Office;\n#$APPIMAGE_VERSION" >> ~/.local/share/applications/appimagekit-joplin.desktop
+       echo -e "[Desktop Entry]\nEncoding=UTF-8\nName=Joplin\nComment=Joplin for Desktop\nExec=${D_BIN}/Joplin.AppImage\nIcon=joplin\nStartupWMClass=Joplin\nType=Application\nCategories=Office;\n#$APPIMAGE_VERSION" >> ~/.local/share/applications/appimagekit-joplin.desktop
        # Update application icons
        [[ `command -v update-desktop-database` ]] && update-desktop-database ~/.local/share/applications
        print "${COLOR_GREEN}OK${COLOR_RESET}"
@@ -122,7 +125,7 @@ if [[ ! -e ~/.joplin/VERSION ]] || [[ $(< ~/.joplin/VERSION) != "$RELEASE_VERSIO
     print "${COLOR_GREEN}Joplin version${COLOR_RESET}" $RELEASE_VERSION "${COLOR_GREEN}installed.${COLOR_RESET}"
 
     # Add version
-    echo $RELEASE_VERSION > ~/.joplin/VERSION
+    echo $RELEASE_VERSION > "${D_BIN}/Joplin.AppImage.version.txt"
 else
     print "${COLOR_GREEN}You already have the latest version${COLOR_RESET}" $version "${COLOR_GREEN}installed.${COLOR_RESET}"
 fi
